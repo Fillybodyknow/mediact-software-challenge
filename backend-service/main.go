@@ -24,6 +24,7 @@ func main() {
 	{
 		route.AuthRoute(Auth)
 	}
+	route.ShiftRoute(r)
 
 	port := os.Getenv("PORT")
 
