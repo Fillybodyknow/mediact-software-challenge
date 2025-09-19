@@ -61,16 +61,16 @@ func CheckAssignShift(request models.AssignShiftRequest) error {
 		return errors.New("ไม่พบช่วงเวลานี้ในระบบ")
 	}
 
-	assignments, err := repository.FindAssignShiftByShiftID(request.ShiftID)
-	if err != nil {
-		return err
-	}
-	if len(assignments) > 0 {
-		return errors.New("มีพยาบาลอื่นได้รับช่วงเวลานี้แล้ว")
-	}
-
 	if nurse, _ := repository.FindUserByID(request.UserID); nurse == nil || nurse.Role != "nurse" {
 		return errors.New("ไม่พบพยาบาลคนนี้ในระบบ")
+	}
+
+	Exist, err := repository.FindAssignShiftByShiftIDAndUserID(request.ShiftID, request.UserID)
+	if err != nil {
+		return err // DB error
+	}
+	if Exist != nil {
+		return errors.New("พยาบาลคนนี้ได้รับการจัดกิจกรรมในช่วงเวลานี้แล้ว")
 	}
 
 	if err := repository.InsertAssignShift(request); err != nil {

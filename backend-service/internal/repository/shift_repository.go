@@ -68,24 +68,24 @@ func FindShiftByID(id int) (*models.Shift, error) {
 	return &s, nil
 }
 
-func FindAssignShiftByShiftID(id int) ([]models.AssignShift, error) {
-	rows, err := config.DB.Query("SELECT id, user_id, shift_id FROM shift_assignments WHERE shift_id = ?", id)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// func FindAssignShiftByShiftID(id int) ([]models.AssignShift, error) {
+// 	rows, err := config.DB.Query("SELECT id, user_id, shift_id FROM shift_assignments WHERE shift_id = ?", id)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	var assignments []models.AssignShift
-	for rows.Next() {
-		var a models.AssignShift
-		if err := rows.Scan(&a.ID, &a.UserID, &a.ShiftID); err != nil {
-			return nil, err
-		}
-		assignments = append(assignments, a)
-	}
+// 	var assignments []models.AssignShift
+// 	for rows.Next() {
+// 		var a models.AssignShift
+// 		if err := rows.Scan(&a.ID, &a.UserID, &a.ShiftID); err != nil {
+// 			return nil, err
+// 		}
+// 		assignments = append(assignments, a)
+// 	}
 
-	return assignments, nil
-}
+// 	return assignments, nil
+// }
 
 func FindAssignShiftByUserID(id int) ([]models.AssignShift, error) {
 	rows, err := config.DB.Query("SELECT id, user_id, shift_id FROM shift_assignments WHERE user_id = ?", id)
@@ -104,6 +104,20 @@ func FindAssignShiftByUserID(id int) ([]models.AssignShift, error) {
 	}
 
 	return assignments, nil
+}
+
+func FindAssignShiftByShiftIDAndUserID(id int, userID int) (*models.AssignShift, error) {
+	row := config.DB.QueryRow("SELECT * FROM shift_assignments WHERE shift_id = ? AND user_id = ?", id, userID)
+
+	var a models.AssignShift
+	err := row.Scan(&a.ID, &a.UserID, &a.ShiftID)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &a, nil
 }
 
 func InsertShift(shift models.Shift) error {
