@@ -7,21 +7,27 @@ import (
 )
 
 func CheckLeaveRequest(AssignID int, UserID int, Reason string) error {
-	HaveAssignShift, err := repository.FindAssignShiftByID(AssignID)
+	if Reason == "" {
+		return errors.New("กรุณากรอกเหตุผลขอลางาน")
+	}
+	HaveAssignShift, err := repository.FindShiftByID(AssignID)
 	if err != nil {
 		return err
 	}
 	if HaveAssignShift == nil {
 		return errors.New("ไม่พบมอบหมายงานนี้ในระบบ")
 	}
-	IsOwnerAssignShift, err := repository.FindAssignShiftByUserIDAndAssignID(AssignID, UserID)
+
+	IsOwnerAssignShift, err := repository.FindAssignShiftByUserIDAndShiftID(HaveAssignShift.ID, UserID)
 	if err != nil {
 		return err
 	}
 	if IsOwnerAssignShift == nil {
 		return errors.New("คุณไม่ใช่ผู้ได้รับมอบหมายงานนี้")
 	}
-	IsExist, err := repository.FindLeaveRequestByAssignID(AssignID)
+
+	println("IsOwnerAssignShift.ID ", IsOwnerAssignShift.ID)
+	IsExist, err := repository.FindLeaveRequestByAssignID(IsOwnerAssignShift.ID)
 	if err != nil {
 		return err
 	}
@@ -30,7 +36,7 @@ func CheckLeaveRequest(AssignID int, UserID int, Reason string) error {
 	}
 
 	LeaveRequest := models.LeaveRequest{
-		Shift_assignment_id: AssignID,
+		Shift_assignment_id: IsOwnerAssignShift.ID,
 		Reason:              Reason,
 		Status:              "pending",
 	}

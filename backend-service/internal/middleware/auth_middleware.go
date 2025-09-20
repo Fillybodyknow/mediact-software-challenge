@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -32,6 +33,8 @@ func AuthMiddleware() gin.HandlerFunc {
 			}
 			return []byte(secret), nil
 		})
+
+		fmt.Println("Using secret:", secret, "Token Valid:", token.Valid)
 
 		if err != nil || !token.Valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token ไม่ถูกต้อง"})

@@ -70,3 +70,22 @@ func UpdateStatusLeaveRequest(id int, status string, approved_by int) error {
 
 	return nil
 }
+
+func FindLeaveRequestByUserID(id int) ([]models.LeaveRequestJoinShift, error) {
+	rows, err := config.DB.Query("SELECT reason, date, start_time, end_time, status, approved_by FROM leave_requests as l INNER JOIN shift_assignments as sa ON l.shift_assignment_id = sa.id INNER JOIN shifts as s ON sa.shift_id = s.id where sa.user_id = ? ", id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var leaveRequests []models.LeaveRequestJoinShift
+	for rows.Next() {
+		var l models.LeaveRequestJoinShift
+		if err := rows.Scan(&l.Reason, &l.Date, &l.StartTime, &l.EndTime, &l.Status, &l.ApprovedBy); err != nil {
+			return nil, err
+		}
+		leaveRequests = append(leaveRequests, l)
+	}
+
+	return leaveRequests, nil
+}

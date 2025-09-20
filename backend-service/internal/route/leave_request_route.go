@@ -11,5 +11,6 @@ func LeaveRequestRoute(router *gin.Engine) {
 	router.Use(middleware.AuthMiddleware())
 	router.POST("/leave-requests", handle.LeaveRequest)
 	router.GET("/leave-requests", handle.GetAllLeaveRequest)
+	router.GET("/leave-requests/history", handle.GetUserLeaveRequest)
 	router.PATCH("/leave-requests/:id/approve", handle.ApproveLeaveRequest)
 }

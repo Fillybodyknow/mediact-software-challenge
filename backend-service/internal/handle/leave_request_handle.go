@@ -76,3 +76,50 @@ func ApproveLeaveRequest(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "อนุมัติเรียบร้อย"})
 }
+
+func RejectLeaveRequest(c *gin.Context) {
+	Role, _ := c.Get("role")
+	UserID, _ := c.Get("user_id")
+
+	if Role != "head_nurse" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "เฉพาะหัวหน้าพยาบาลเท่านั้น"})
+		return
+	}
+
+	leaveRequestIDStr := c.Param("id")
+	leaveRequestID, err := strconv.Atoi(leaveRequestIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "รหัสคำขอลาไม่ถูกต้อง"})
+		return
+	}
+
+	if err := service.CheckApproveLeaveRequest(leaveRequestID, "rejected", int(UserID.(float64))); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "ปฏิเสธเรียบร้อย"})
+}
+
+func GetUserLeaveRequest(c *gin.Context) {
+	Role, _ := c.Get("role")
+	UserID, _ := c.Get("user_id")
+
+	if Role != "nurse" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "เฉพาะพยาบาลเท่านั้น"})
+		return
+	}
+
+	LeaveRequest, err := repository.FindLeaveRequestByUserID(int(UserID.(float64)))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"user_id":        int(UserID.(float64)),
+		"role":           Role,
+		"leave_requests": LeaveRequest,
+	})
+}

@@ -71,6 +71,6 @@ func CheckLogin(request models.LoginRequest) error {
 
 func GenarateToken(email string) string {
 	user, _ := repository.FindUserByEmail(email)
-	token, _ := utils.GenarateJWTToken(user.ID, user.Role)
+	token, _ := utils.GenerateJWTToken(user.ID, user.Role)
 	return token
 }

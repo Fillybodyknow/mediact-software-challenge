@@ -101,8 +101,8 @@ func FindAssignShiftByUserID(id int) ([]models.AssignShift, error) {
 	return assignments, nil
 }
 
-func FindAssignShiftByUserIDAndAssignID(AssignID int, userID int) (*models.AssignShift, error) {
-	row := config.DB.QueryRow("SELECT * FROM shift_assignments WHERE id = ? AND user_id = ?", AssignID, userID)
+func FindAssignShiftByUserIDAndShiftID(ShiftID int, userID int) (*models.AssignShift, error) {
+	row := config.DB.QueryRow("SELECT * FROM shift_assignments WHERE shift_id = ? AND user_id = ?", ShiftID, userID)
 
 	var a models.AssignShift
 	err := row.Scan(&a.ID, &a.UserID, &a.ShiftID)
