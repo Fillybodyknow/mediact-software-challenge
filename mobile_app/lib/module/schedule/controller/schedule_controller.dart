@@ -39,9 +39,14 @@ class ScheduleController extends GetxController {
         try {
           final body = jsonDecode(response.body);
           final data = body['schedule'];
-          scheduleList.value = (data as List)
-              .map<ScheduleModel>((item) => ScheduleModel.fromJson(item))
-              .toList();
+
+          if (data == null) {
+            scheduleList.value = [];
+          } else {
+            scheduleList.value = (data as List)
+                .map<ScheduleModel>((item) => ScheduleModel.fromJson(item))
+                .toList();
+          }
         } catch (e) {
           await Notify.alert('ข้อมูลไม่ถูกต้องจากเซิร์ฟเวอร์');
           print('JSON Parse Error: $e');

@@ -29,7 +29,7 @@ class LeaveRequestController extends GetxController {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'shift_assignment_id': selectedAssignmentId!.value,
+          'shift_assignment_id': selectedAssignmentId.value,
           'reason': reason.value,
         }),
       );
@@ -62,8 +62,13 @@ class LeaveRequestController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        final data =
-            jsonDecode(response.body)['leave_requests'] as List<dynamic>;
+        final body = jsonDecode(response.body);
+
+        // เช็คก่อนว่า leave_requests เป็น null ไหม
+        final data = body['leave_requests'] == null
+            ? <dynamic>[]
+            : body['leave_requests'] as List<dynamic>;
+
         return data
             .map((item) => LeaveRequestResponseModel.fromJson(item))
             .toList();

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
+import 'package:mediact_app/module/authication/model/auth_model.dart' as model;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mediact_app/utility/notify.dart';
 import 'package:mediact_app/utility/https.dart';
@@ -54,5 +55,50 @@ class LoginController extends GetxController {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     Get.offAllNamed('/login');
+  }
+}
+
+class RegisterController extends GetxController {
+  TextEditingController nameController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+  TextEditingController verifyPasswordController = TextEditingController();
+  RxString selectedRole = 'nurse'.obs;
+
+  Future<void> register() async {
+    if (passwordController.text != verifyPasswordController.text) {
+      return Notify.alert('รหัสผ่านไม่ตรงกัน');
+    }
+
+    final registerData = model.RegisterRequest(
+      name: nameController.text,
+      email: emailController.text,
+      role: selectedRole.value,
+      password: passwordController.text,
+      verifyPassword: verifyPasswordController.text,
+    );
+
+    String registerEndpoint = '${Https.developerUrl}/auth/register';
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(registerEndpoint),
+            headers: {'Content-Type': 'application/json; charset=UTF-8'},
+            body: jsonEncode(registerData.toJson()),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Notify.success('สมัครสมาชิกสำเร็จ', title: 'เรียบร้อย');
+        Get.offAllNamed('/login');
+      } else {
+        final errorData = jsonDecode(response.body);
+        Notify.alert('${errorData['error']}');
+      }
+    } catch (e) {
+      Notify.alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้: $e');
+      print(e);
+    }
   }
 }

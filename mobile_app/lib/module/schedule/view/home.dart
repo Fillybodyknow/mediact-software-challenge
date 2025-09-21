@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mediact_app/module/authication/controller/login_controller.dart';
+import 'package:mediact_app/module/authication/controller/auth_controller.dart';
 import 'package:mediact_app/module/schedule/view/leave-request.dart';
 import 'package:mediact_app/module/schedule/view/my-schedule.dart';
 import 'package:mediact_app/utility/textstyle.dart';
