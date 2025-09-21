@@ -1,3 +1,4 @@
 class Https {
-  static final String developerUrl = "http://101.51.41.30:3000";
+  static final String developerUrl =
+      "https://mediact-software-challenge.onrender.com";
 }

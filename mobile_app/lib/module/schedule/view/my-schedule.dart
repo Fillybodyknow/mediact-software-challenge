@@ -6,6 +6,8 @@ import 'package:mediact_app/utility/textstyle.dart';
 class MySchedule extends StatelessWidget {
   final ScheduleController controller = Get.put(ScheduleController());
 
+  MySchedule({super.key});
+
   String formatTime(String time) {
     final parts = time.split(':');
     return '${parts[0]}:${parts[1]}';

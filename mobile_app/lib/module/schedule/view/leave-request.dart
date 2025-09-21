@@ -23,12 +23,12 @@ class LeaveRequest extends StatelessWidget {
     RxInt selectedPage = 0.obs;
 
     List<Widget> pages = [
-      leaveRequestForm(leaveRequestController, scheduleController),
+      leaveRequestForm(leaveRequestController, scheduleController, context),
       LeaveRequestHistory(leaveRequestController),
     ];
 
     return Scaffold(
-      body: Container(
+      body: SizedBox(
         width: double.infinity,
         child: Obx(
           () => Column(
@@ -93,7 +93,7 @@ class LeaveRequest extends StatelessWidget {
                   ),
                 ],
               ),
-              pages[selectedPage.value],
+              Expanded(child: pages[selectedPage.value]),
             ],
           ),
         ),
@@ -105,6 +105,7 @@ class LeaveRequest extends StatelessWidget {
 Widget leaveRequestForm(
   LeaveRequestController leaveRequestController,
   ScheduleController scheduleController,
+  BuildContext context,
 ) {
   return SizedBox(
     width: double.infinity,
@@ -114,19 +115,14 @@ Widget leaveRequestForm(
       child: Obx(() {
         // ตรวจสอบว่าข้อมูล schedule โหลดเสร็จหรือยัง
         if (scheduleController.scheduleList.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: Colors.redAccent),
-                  SizedBox(height: 16),
-                  Text(
-                    'กำลังโหลดข้อมูลกะทำงาน...',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ],
+          return SizedBox(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 200),
+                child: Text(
+                  'ไม่พบข้อมูลกะการทํางาน',
+                  style: AppTextStyles.medium(color: Colors.grey),
+                ),
               ),
             ),
           );
@@ -151,7 +147,7 @@ Widget leaveRequestForm(
                   contentPadding: EdgeInsets.symmetric(horizontal: 16),
                 ),
                 hint: const Text('กรุณาเลือกกะ'),
-                value: leaveRequestController.selectedAssignmentId.value,
+                initialValue: leaveRequestController.selectedAssignmentId.value,
                 items: scheduleController.scheduleList.map((schedule) {
                   return DropdownMenuItem<int>(
                     value: schedule.id,
@@ -224,117 +220,111 @@ Widget leaveRequestForm(
 }
 
 Widget LeaveRequestHistory(LeaveRequestController leaveRequestController) {
-  return Expanded(
-    child: FutureBuilder(
-      future: leaveRequestController.fetchNurseLeaveRequests(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+  return FutureBuilder(
+    future: leaveRequestController.fetchNurseLeaveRequests(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(
+          child: CircularProgressIndicator(color: Colors.redAccent),
+        );
+      } else if (snapshot.hasError) {
+        return Center(child: Text('เกิดข้อผิดพลาด: ${snapshot.error}'));
+      } else if (snapshot.hasData) {
+        final leaveRequests = snapshot.data as List<LeaveRequestResponseModel>;
+        if (leaveRequests.isEmpty) {
           return const Center(
-            child: CircularProgressIndicator(color: Colors.redAccent),
+            child: Text(
+              'ไม่พบข้อมูลการลา',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           );
-        } else if (snapshot.hasError) {
-          return Center(child: Text('เกิดข้อผิดพลาด: ${snapshot.error}'));
-        } else if (snapshot.hasData) {
-          final leaveRequests =
-              snapshot.data as List<LeaveRequestResponseModel>;
-          if (leaveRequests.isEmpty) {
-            return const Center(
-              child: Text(
-                'ไม่พบข้อมูลการลา',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500,
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          itemCount: leaveRequests.length,
+          itemBuilder: (context, index) {
+            final leaveRequest = leaveRequests[index];
+            String dateOnly = leaveRequest.date.split('T')[0];
+            String THStatus = '';
+            switch (leaveRequest.status) {
+              case 'pending':
+                THStatus = 'รอดำเนินการ';
+                break;
+              case 'approved':
+                THStatus = 'อนุมัติ';
+                break;
+              case 'rejected':
+                THStatus = 'ไม่อนุมัติ';
+                break;
+            }
+            final statusColor = _getStatusColor(THStatus);
+            return Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            leaveRequest.reason,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            THStatus,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: statusColor,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$dateOnly • ${leaveRequest.startTime} - ${leaveRequest.endTime}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 8.0,
-            ),
-            itemCount: leaveRequests.length,
-            itemBuilder: (context, index) {
-              final leaveRequest = leaveRequests[index];
-              String dateOnly = leaveRequest.date.split('T')[0];
-              String THStatus = '';
-              switch (leaveRequest.status) {
-                case 'pending':
-                  THStatus = 'รอดำเนินการ';
-                  break;
-                case 'approved':
-                  THStatus = 'อนุมัติ';
-                  break;
-                case 'rejected':
-                  THStatus = 'ไม่อนุมัติ';
-                  break;
-              }
-              final statusColor = _getStatusColor(THStatus);
-              return Card(
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              leaveRequest.reason,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              THStatus,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: statusColor,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${dateOnly} • ${leaveRequest.startTime} - ${leaveRequest.endTime}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        } else {
-          return const Center(child: Text('ไม่พบข้อมูลการลา'));
-        }
-      },
-    ),
+          },
+        );
+      } else {
+        return const Center(child: Text('ไม่พบข้อมูลการลา'));
+      }
+    },
   );
 }
 
